@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        button {
+            padding: 5px 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button.delete {
+            background-color: #dc3545;
+        }
+        button:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <h1>Admin Dashboard</h1>
+
+    <h2>User Logs</h2>
+    <table id="logs-table">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Code</th>
+                <th>Timestamp</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Logs will be dynamically loaded -->
+        </tbody>
+    </table>
+
+    <h2>Unused Codes</h2>
+    <table id="codes-table">
+        <thead>
+            <tr>
+                <th>Code</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Codes will be dynamically loaded -->
+        </tbody>
+    </table>
+
+    <script>
+        async function loadLogs() {
+            const response = await fetch('/api/logs');
+            const logs = await response.json();
+            const tableBody = document.getElementById('logs-table').querySelector('tbody');
+            tableBody.innerHTML = '';
+            logs.forEach(log => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${log.Username}</td>
+                    <td>${log.Code}</td>
+                    <td>${log.Timestamp}</td>
+                    <td><button class="delete" onclick="deleteLog('${log.Username}', '${log.Code}')">Delete</button></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        async function deleteLog(username, code) {
+            await fetch('/api/logs', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, code })
+            });
+            loadLogs();
+        }
+
+        async function loadUnusedCodes() {
+            const response = await fetch('/api/unused-codes');
+            const codes = await response.json();
+            const tableBody = document.getElementById('codes-table').querySelector('tbody');
+            tableBody.innerHTML = '';
+            codes.forEach(code => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${code}</td>
+                    <td><button onclick="markAsUnused('${code}')">Mark as Unused</button></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        async function markAsUnused(code) {
+            await fetch('/api/unused-codes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            loadUnusedCodes();
+        }
+
+        // Initial load
+        loadLogs();
+        loadUnusedCodes();
+    </script>
+</body>
+</html>
